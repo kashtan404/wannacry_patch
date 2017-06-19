@@ -1,0 +1,37 @@
+---
+
+- name: Search for already installed
+  win_shell: wmic qfe list | Select-String -pattern "KB4012598", "KB4012212", "KB4012214", "KB4012213", "KB4013429"
+  register: content
+
+- name: Copy update to remote host server 2008
+  win_copy: src=Windows6.0-KB4012598-x64.cab dest=c:\\windows\\temp\\ansible_update.cab
+  when: ansible_distribution == "Microsoft Windows Server 2008 Standard" and content.stdout == ""
+
+- name: Copy update to remote host server 2008 r2
+  win_copy: src=Windows6.1-KB4012212-x64.cab dest=c:\\windows\\temp\\ansible_update.cab
+  when: ansible_distribution == "Microsoft Windows Server 2008 R2 Standard " and content.stdout == ""
+
+- name: Copy update to remote host server 2012
+  win_copy: src=Windows8-RT-KB4012214-x64.cab dest=c:\\windows\\temp\\ansible_update.cab
+  when: ansible_distribution == "Microsoft Windows Server 2012 Standard" and content.stdout == ""
+
+- name: Copy update to remote host server 2012 r2
+  win_copy: src=Windows8.1-KB4012213-x64.cab dest=c:\\windows\\temp\\ansible_update.cab
+  when: ansible_distribution == "Microsoft Windows Server 2012 R2 Standard" and content.stdout == ""
+
+- name: Copy update to remote host server 2016
+  win_copy: src=Windows10.0-KB4013429-x64.cab dest=c:\\windows\\temp\\ansible_update.cab
+  when: ansible_distribution == "Microsoft Windows Server 2016 Standard" and content.stdout == ""
+
+- name: Install update
+  win_shell: Start-Process 'dism.exe' -NoNewWindow -Wait -ArgumentList '/online','/add-package','/PackagePath:C:\windows\temp\ansible_update.cab','/Quiet','/NoRestart'
+
+- name: Remove temp
+  win_file:
+    path: c:\windows\temp\ansible_update.cab
+    state: absent
+
+- name: Reboot
+  win_reboot:
+  when: do_reboot == True
